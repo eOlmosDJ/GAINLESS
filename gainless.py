@@ -80,6 +80,59 @@ def resource_path(relative_path):
 
 
 
+
+def get_ffmpeg_cmd():
+    """Retorna la ruta o comando para invocar ffmpeg (bundle embebido, local, o PATH)."""
+    if hasattr(sys, "_MEIPASS"):
+        bundled = os.path.join(sys._MEIPASS, "ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+        if os.path.isfile(bundled):
+            return bundled
+    app_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    local_bin = os.path.join(app_dir, "ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+    if os.path.isfile(local_bin):
+        return local_bin
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    if os.name == "nt" and os.path.isfile(r"C:fmpeginfmpeg.exe"):
+        return r"C:fmpeginfmpeg.exe"
+    return "ffmpeg"
+
+
+def get_ffprobe_cmd():
+    """Retorna la ruta o comando para invocar ffprobe (bundle embebido, local, o PATH)."""
+    if hasattr(sys, "_MEIPASS"):
+        bundled = os.path.join(sys._MEIPASS, "ffprobe.exe" if os.name == "nt" else "ffprobe")
+        if os.path.isfile(bundled):
+            return bundled
+    app_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    local_bin = os.path.join(app_dir, "ffprobe.exe" if os.name == "nt" else "ffprobe")
+    if os.path.isfile(local_bin):
+        return local_bin
+    found = shutil.which("ffprobe")
+    if found:
+        return found
+    if os.name == "nt" and os.path.isfile(r"C:fmpeginfprobe.exe"):
+        return r"C:fmpeginfprobe.exe"
+    return "ffprobe"
+
+
+def is_ffmpeg_available():
+    cmd = get_ffmpeg_cmd()
+    if os.path.isabs(cmd):
+        return os.path.isfile(cmd)
+    return bool(shutil.which(cmd))
+
+
+# Aseguramos que sys._MEIPASS y C:fmpegin estén en PATH
+if hasattr(sys, "_MEIPASS"):
+    if sys._MEIPASS not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = sys._MEIPASS + os.pathsep + os.environ.get("PATH", "")
+
+if os.name == "nt" and os.path.isdir(r"C:fmpegin"):
+    if r"C:fmpegin" not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = r"C:fmpegin" + os.pathsep + os.environ.get("PATH", "")
+
 def set_windows_app_id():
 
     """Asigna un AppUserModelID único para que Windows muestre el logo de GAINLESS en la barra de tareas."""
@@ -2034,7 +2087,7 @@ class GainlessApp:
 
         self.root = root
 
-        self.root.title("GAINLESS")
+        self.root.title("GAINLESS [Standalone]")
 
         self.root.geometry("1040x690")
 
@@ -2744,9 +2797,9 @@ class GainlessApp:
 
             return
 
-        if not shutil.which("ffmpeg"):
+        if not is_ffmpeg_available():
 
-            messagebox.showerror("FFmpeg Not Found", "Could not find 'ffmpeg' on the system.")
+            messagebox.showerror("FFmpeg Not Found", "Could not find 'ffmpeg' on the system.\n\nPlease install FFmpeg or download GAINLESS Portable Edition (with FFmpeg included).")
 
             return
 
@@ -2790,9 +2843,9 @@ class GainlessApp:
 
             return
 
-        if not shutil.which("ffmpeg"):
+        if not is_ffmpeg_available():
 
-            messagebox.showerror("FFmpeg Not Found", "Could not find 'ffmpeg' on the system.")
+            messagebox.showerror("FFmpeg Not Found", "Could not find 'ffmpeg' on the system.\n\nPlease install FFmpeg or download GAINLESS Portable Edition (with FFmpeg included).")
 
             return
 
@@ -3114,7 +3167,7 @@ class GainlessApp:
 
         cmd = [
 
-            "ffmpeg", "-nostats", "-i", filepath,
+            get_ffmpeg_cmd(), "-nostats", "-i", filepath,
 
             "-filter_complex", "ebur128=peak=true",
 
@@ -3210,7 +3263,7 @@ class GainlessApp:
 
         cmd = [
 
-            "ffmpeg", "-y", "-i", filepath,
+            get_ffmpeg_cmd(), "-y", "-i", filepath,
 
             "-map", "0:a:0",
 
