@@ -1,0 +1,10 @@
+build/
+dist/
+__pycache__/
+*.spec
+*.exe
+Musica_Prueba/
+.temp_align_*
+lufs_align_dj.py
+lufs_align_dj_v2.py
+lufs_align_djm900.py
